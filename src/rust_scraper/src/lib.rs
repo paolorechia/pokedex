@@ -4,19 +4,12 @@ use std::vec::Vec;
 
 use serde_json;
 
-mod config;
+// Re-exports modules as pub
+pub mod mongo;
+pub mod model;
 
-#[derive(Debug)]
-struct Pokemon {
-    origin: String,
-    name_origin: String,
-    evolution: String,
-    category: String,
-    height: String,
-    weight: String,
-    pokemon_types: Vec<String>,
-    generation: i32
-}
+// Manually export functions from config
+mod config;
 
 pub fn load_config() -> config::Settings {
     config::load_config()
