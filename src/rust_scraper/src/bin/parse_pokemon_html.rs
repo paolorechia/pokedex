@@ -2,6 +2,8 @@ use pokedex_scraper::{load_config, load_pokemon_html, load_pokemon_list};
 use scraper::{ElementRef, Html, Selector};
 use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
+use std::thread;
+use std::sync::Arc;
 
 #[derive(Debug)]
 struct Blocks {
@@ -187,29 +189,68 @@ fn find_table(doc: &Html) -> SmallTable {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = load_config();
 
-    let mut pokemons = load_pokemon_list(&settings);
+    let pokemons = load_pokemon_list(&settings);
+    let mut handles = vec![];
 
-    let y: String = "Bulbasaur".to_string();
+
+    // let y: String = "Bulbasaur".to_string();
     // pokemons.retain(|x| *x == y);
 
-    for chosen in pokemons {
-        println!("{}", chosen);
-        let html = load_pokemon_html(&settings, &chosen);
-        match html {
-            Some(html) => {
-                let doc = Html::parse_document(&html);
+    // Split into chunks
+    let threads = 10;
+    let mut i = 0;
+    let mut j = 0;
+    let chunk_size = pokemons.len() / threads;
+    let mut chunk_number = pokemons.len() / chunk_size; 
+    if pokemons.len() % chunk_size > 0 {
+        chunk_number +=1;
+    }
 
-                let d = find_description(&doc);
-                let b = find_blocks(&doc);
-                let t = find_table(&doc);
-                println!("Description: {}", d);
-                println!("Blocks : {:?}", b);
-                println!("Table: {:?}", t);
+    let mut chunks = vec![];
+    for _ in 0..chunk_number {
+        chunks.push(vec![])
+    }
+    for pokemon in pokemons {
+        if i == chunk_size {
+            j += 1;
+            i = 0; 
+        }
+        chunks[j].push(pokemon);
+        i += 1;
+    }
+
+    println!("Splitting it into chunks!");
+    let shared_settings = Arc::new(settings);
+    for i in 0..threads {
+        println!("Thread: {}", i);
+        let chunk = chunks[i].clone();
+        println!("Chunk: {:?}", chunk);
+        let settings = shared_settings.clone();
+        let handle = thread::spawn(move || {
+            for chosen in chunk {
+                // println!("{:?}", chosen);
+                let html = load_pokemon_html(&settings, &chosen);
+                match html {
+                    Some(html) => {
+                        let doc = Html::parse_document(&html);
+
+                        let d = find_description(&doc);
+                        let b = find_blocks(&doc);
+                        let t = find_table(&doc);
+                        println!("Description: {}", d);
+                        println!("Blocks : {:?}", b);
+                        println!("Table: {:?}", t);
+                    }
+                    None => {
+                        println!("File for not found!");
+                    }
+                };
             }
-            None => {
-                println!("File for not found!");
-            }
-        };
+        });
+        handles.push(handle);
+    }
+    for handle in handles {
+        handle.join().unwrap();
     }
     Ok(())
 }
