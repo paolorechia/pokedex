@@ -16,10 +16,16 @@ pub async fn get_db(client: &Client) -> mongodb::Database {
     client.database("pokedex")
 }
 
-
 pub async fn print_db_names(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
     for db_name in client.list_database_names(None, None).await? {
         println!("{}", db_name);
     }
     Ok(())
+}
+
+pub async fn init_pokemon_collection() -> Result<(mongodb::Collection), Box<dyn std::error::Error>>
+{
+    let client = connect().await?;
+    let mut db = client.database("pokedex");
+    Ok(db.collection("pokemons"))
 }

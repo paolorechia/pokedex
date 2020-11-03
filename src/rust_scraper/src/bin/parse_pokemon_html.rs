@@ -1,9 +1,13 @@
-use pokedex_scraper::{load_config, load_pokemon_html, load_pokemon_list};
+use pokedex_scraper::model::Pokemon;
+use pokedex_scraper::config;
+use pokedex_scraper::mongo::init_pokemon_collection;
+use pokedex_scraper::{load_config, load_pokemon_html, load_pokemon_list, save_pokemon_to_mongo};
 use scraper::{ElementRef, Html, Selector};
 use std::collections::{HashMap, HashSet};
-use std::vec::Vec;
-use std::thread;
 use std::sync::Arc;
+use std::thread;
+use std::vec::Vec;
+use tokio::runtime::Runtime;
 
 #[derive(Debug)]
 struct Blocks {
@@ -186,24 +190,38 @@ fn find_table(doc: &Html) -> SmallTable {
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn raw_data_to_pokemon(d: String, b: Blocks, t: SmallTable) -> Pokemon {
+    Pokemon {
+        id: None,
+        origin: b.origin,
+        name_origin: b.name_origin,
+        evolution: b.evolution,
+        category: t.category,
+        height: t.height,
+        weight: t.weight,
+        pokemon_types: vec![t.types],
+        generation: -1,
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = load_config();
 
     let pokemons = load_pokemon_list(&settings);
     let mut handles = vec![];
 
-
     // let y: String = "Bulbasaur".to_string();
     // pokemons.retain(|x| *x == y);
 
     // Split into chunks
-    let threads = 10;
+    let threads = 20;
     let mut i = 0;
     let mut j = 0;
     let chunk_size = pokemons.len() / threads;
-    let mut chunk_number = pokemons.len() / chunk_size; 
+    let mut chunk_number = pokemons.len() / chunk_size;
     if pokemons.len() % chunk_size > 0 {
-        chunk_number +=1;
+        chunk_number += 1;
     }
 
     let mut chunks = vec![];
@@ -213,7 +231,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for pokemon in pokemons {
         if i == chunk_size {
             j += 1;
-            i = 0; 
+            i = 0;
         }
         chunks[j].push(pokemon);
         i += 1;
@@ -222,35 +240,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Splitting it into chunks!");
     let shared_settings = Arc::new(settings);
     for i in 0..threads {
+        let collection = init_pokemon_collection().await?;
         println!("Thread: {}", i);
         let chunk = chunks[i].clone();
         println!("Chunk: {:?}", chunk);
         let settings = shared_settings.clone();
         let handle = thread::spawn(move || {
-            for chosen in chunk {
-                // println!("{:?}", chosen);
-                let html = load_pokemon_html(&settings, &chosen);
-                match html {
-                    Some(html) => {
-                        let doc = Html::parse_document(&html);
-
-                        let d = find_description(&doc);
-                        let b = find_blocks(&doc);
-                        let t = find_table(&doc);
-                        println!("Description: {}", d);
-                        println!("Blocks : {:?}", b);
-                        println!("Table: {:?}", t);
-                    }
-                    None => {
-                        println!("File for not found!");
-                    }
-                };
-            }
+            let mut rt = Runtime::new().unwrap();
+            rt.block_on(async_processing(chunk, &settings, &collection));
         });
         handles.push(handle);
     }
-    for handle in handles {
-        handle.join().unwrap();
+for handle in handles {
+    handle.join().unwrap();
+    }
+    Ok(())
+}
+
+async fn async_processing(chunk: Vec<String>, settings: &Arc<config::Settings>, collection: &mongodb::Collection) -> Result<(), Box<dyn std::error::Error>> {
+    for chosen in chunk {
+        let html = load_pokemon_html(&settings, &chosen);
+        match html {
+            Some(html) => {
+                let doc = Html::parse_document(&html);
+                let d = find_description(&doc);
+                let b = find_blocks(&doc);
+                let t = find_table(&doc);
+                println!("Description: {}", d);
+                println!("Blocks : {:?}", b);
+                println!("Table: {:?}", t);
+                println!("Saving to mongo...");
+                // let pokemon = raw_data_to_pokemon(chosen.clone(), d, b, t);
+                let pokemon = raw_data_to_pokemon(d, b, t);
+                save_pokemon_to_mongo(&collection, pokemon).await?;
+            }
+            None => {
+                println!("File for not found!");
+            }
+        };
     }
     Ok(())
 }

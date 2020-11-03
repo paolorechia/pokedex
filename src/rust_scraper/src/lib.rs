@@ -3,14 +3,14 @@ use std::path::Path;
 use std::vec::Vec;
 
 use serde_json;
+use mongodb::bson;
 
 // Re-exports modules as pub
 pub mod mongo;
 pub mod model;
+pub mod config;
 
 // Manually export functions from config
-mod config;
-
 pub fn load_config() -> config::Settings {
     config::load_config()
 }
@@ -35,9 +35,19 @@ pub fn load_pokemon_html_folder(settings: &config::Settings) -> String {
 pub fn load_pokemon_html(settings: &config::Settings, pokemon: &str) -> Option<String> {
     let pokemon_html_folder = load_pokemon_html_folder(settings);
     let poke_file = pokemon_html_folder + "/" + pokemon + ".html";
+    println!("{:?}", poke_file);
     let res = fs::read_to_string(poke_file);
     match res {
         Ok(n) => Some(n),
         _ => None
     }
+}
+
+pub async fn save_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: model::Pokemon) -> Result<(), Box<dyn std::error::Error>> {
+    println!("I promise I will save this pokemon");
+
+    let b = bson::to_bson(&pokemon)?;
+    let d = b.as_document().unwrap();
+    collection.insert_one(d.to_owned(), None).await?;
+    Ok(())
 }
