@@ -15,6 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let collection = db.collection("pokemons");
     let pokemon = Pokemon {
         id: None,
+        name: "".to_string(),
+        description: "".to_string(),
         origin: "Test".to_string(),
         name_origin: "Test".to_string(),
         evolution: "test".to_string(),

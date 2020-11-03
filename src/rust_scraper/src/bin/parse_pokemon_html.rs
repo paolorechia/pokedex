@@ -190,9 +190,11 @@ fn find_table(doc: &Html) -> SmallTable {
     }
 }
 
-fn raw_data_to_pokemon(d: String, b: Blocks, t: SmallTable) -> Pokemon {
+fn raw_data_to_pokemon(name: String, d: String, b: Blocks, t: SmallTable) -> Pokemon {
     Pokemon {
         id: None,
+        name: name,
+        description: d,
         origin: b.origin,
         name_origin: b.name_origin,
         evolution: b.evolution,
@@ -270,8 +272,7 @@ async fn async_processing(chunk: Vec<String>, settings: &Arc<config::Settings>, 
                 println!("Blocks : {:?}", b);
                 println!("Table: {:?}", t);
                 println!("Saving to mongo...");
-                // let pokemon = raw_data_to_pokemon(chosen.clone(), d, b, t);
-                let pokemon = raw_data_to_pokemon(d, b, t);
+                let pokemon = raw_data_to_pokemon(chosen.clone(), d, b, t);
                 save_pokemon_to_mongo(&collection, pokemon).await?;
             }
             None => {

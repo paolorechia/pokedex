@@ -5,6 +5,8 @@ use mongodb::bson;
 pub struct Pokemon {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<bson::oid::ObjectId>,
+    pub name: String,
+    pub description: String,
     pub origin: String,
     pub name_origin: String,
     pub evolution: String,
