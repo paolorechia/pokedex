@@ -44,10 +44,31 @@ pub fn load_pokemon_html(settings: &config::Settings, pokemon: &str) -> Option<S
 }
 
 pub async fn save_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: model::Pokemon) -> Result<(), Box<dyn std::error::Error>> {
-    println!("I promise I will save this pokemon");
-
     let b = bson::to_bson(&pokemon)?;
     let d = b.as_document().unwrap();
     collection.insert_one(d.to_owned(), None).await?;
+    Ok(())
+}
+
+pub async fn find_pokemon_by_name(collection: &mongodb::Collection, name: &String) -> Result<Option<model::Pokemon>, Box<dyn std::error::Error>> {
+    let filter = bson::doc! { "name": name.clone() };
+    let cursor = collection.find_one(filter, None).await?;
+    let pokemon = match cursor {
+        Some(document) => {
+            let pokemon: model::Pokemon = bson::from_document(document).unwrap();
+            Some(pokemon)
+        },
+        None => { 
+            None
+        }
+    };
+    Ok(pokemon)
+}
+
+pub async fn update_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: model::Pokemon) -> Result<(), Box<dyn std::error::Error>> {
+    let b = bson::to_bson(&pokemon)?;
+    let d = b.as_document().unwrap();
+    let filter = bson::doc! { "name": pokemon.name.clone() };
+    collection.update_one(filter, d.to_owned(), None).await?;
     Ok(())
 }

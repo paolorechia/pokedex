@@ -1,5 +1,5 @@
-use pokedex_scraper::model::Pokemon;
 use pokedex_scraper::config;
+use pokedex_scraper::model::Pokemon;
 use pokedex_scraper::mongo::init_pokemon_collection;
 use pokedex_scraper::{load_config, load_pokemon_html, load_pokemon_list, save_pokemon_to_mongo};
 use scraper::{ElementRef, Html, Selector};
@@ -249,17 +249,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let settings = shared_settings.clone();
         let handle = thread::spawn(move || {
             let mut rt = Runtime::new().unwrap();
-            rt.block_on(async_processing(chunk, &settings, &collection));
+            rt.block_on(async_processing(chunk, &settings, &collection))
+                .expect("Error spawning async task");
         });
         handles.push(handle);
     }
-for handle in handles {
-    handle.join().unwrap();
+    for handle in handles {
+        handle.join().unwrap();
     }
     Ok(())
 }
 
-async fn async_processing(chunk: Vec<String>, settings: &Arc<config::Settings>, collection: &mongodb::Collection) -> Result<(), Box<dyn std::error::Error>> {
+async fn async_processing(
+    chunk: Vec<String>,
+    settings: &Arc<config::Settings>,
+    collection: &mongodb::Collection,
+) -> Result<(), Box<dyn std::error::Error>> {
     for chosen in chunk {
         let html = load_pokemon_html(&settings, &chosen);
         match html {

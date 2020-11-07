@@ -1,4 +1,4 @@
-use pokedex_scraper::mongo::{connect, get_db, print_db_names};
+use pokedex_scraper::mongo::{connect, print_db_names};
 use pokedex_scraper::model::{Pokemon};
 use mongodb::bson;
 
@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = connect().await?;
     print_db_names(&client).await?;
-    let mut db = client.database("pokedex");
+    let db = client.database("pokedex");
     // List the names of the collections in that database.
     for collection_name in db.list_collection_names(None).await? {
         println!("{}", collection_name);

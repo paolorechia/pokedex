@@ -1,4 +1,7 @@
-use mongodb::{options::ClientOptions, Client};
+use mongodb::{
+    options::ClientOptions,
+    Client
+};
 
 pub async fn connect() -> Result<Client, Box<dyn std::error::Error>> {
     // Parse a connection string into an options struct.
@@ -23,9 +26,9 @@ pub async fn print_db_names(client: &Client) -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
-pub async fn init_pokemon_collection() -> Result<(mongodb::Collection), Box<dyn std::error::Error>>
+pub async fn init_pokemon_collection() -> Result<mongodb::Collection, Box<dyn std::error::Error>>
 {
     let client = connect().await?;
-    let mut db = client.database("pokedex");
+    let db = client.database("pokedex");
     Ok(db.collection("pokemons"))
 }
