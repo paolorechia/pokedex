@@ -1,3 +1,4 @@
+use futures::stream::StreamExt;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
@@ -44,6 +45,14 @@ pub fn load_pokemon_html(settings: &config::Settings, pokemon: &str) -> Option<S
     }
 }
 
+pub fn save_data_report(report: model::Report) {
+    let settings = load_config();
+    let data_folder = Path::new(&settings.data_folder);
+    let data_report_json_filepath = data_folder.join(&settings.data_report_json);
+    let serialized = serde_json::to_string(&report).unwrap();
+    fs::write(data_report_json_filepath, serialized).expect("Could not write to file!!");
+}
+
 pub async fn save_pokemon_to_mongo(
     collection: &mongodb::Collection,
     pokemon: model::Pokemon,
@@ -84,8 +93,21 @@ pub async fn update_pokemon_to_mongo(
 pub async fn find_pokemons_by_generation(
     collection: &mongodb::Collection,
     generation: i32,
-) -> Result<Vec<model::Pokemon>, Box<Error>> {
-    let mut result: Vec<model::Pokemon> = vec![];
+) -> Result<Vec<model::Pokemon>, Box<dyn Error>> {
+    let mut found_pokemons: Vec<model::Pokemon> = vec![];
 
-    Ok(result)
+    let filter = bson::doc! {"generation": generation};
+
+    let mut cursor = collection.find(filter, None).await?;
+    while let Some(result) = cursor.next().await {
+        match result {
+            Ok(document) => {
+                let pokemon: model::Pokemon = bson::from_document(document).unwrap();
+                found_pokemons.push(pokemon);
+            }
+            Err(_) => (),
+        }
+    }
+
+    Ok(found_pokemons)
 }

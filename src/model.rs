@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use mongodb::bson;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Pokemon {
@@ -14,5 +14,12 @@ pub struct Pokemon {
     pub height: String,
     pub weight: String,
     pub pokemon_types: Vec<String>,
-    pub generation: i32
+    pub generation: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Report {
+    pub ok: Vec<String>,
+    pub redirected: Vec<String>,
+    pub missing: Vec<String>,
 }

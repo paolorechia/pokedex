@@ -1566,6 +1566,7 @@ dependencies = [
 name = "rust_scraper"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "mongodb",
  "reqwest",
  "scraper",

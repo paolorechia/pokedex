@@ -13,7 +13,8 @@ pub struct Settings {
     pub pokemons_html_folder: String,
     pub poke_list_file: String,
     pub pokemon_first_gen_html: String,
-    pub first_gen_json: String
+    pub first_gen_json: String,
+    pub data_report_json: String,
 }
 
 pub fn load_config() -> Settings {
