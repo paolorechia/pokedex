@@ -1,0 +1,12 @@
+[package]
+name = "hello"
+version = "0.1.0"
+
+[dependencies]
+alexa_sdk = "^0.1"
+lambda_runtime = "^0.1"
+
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"
+

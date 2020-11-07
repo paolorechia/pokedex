@@ -1,0 +1,17 @@
+service: alexa-server-rust
+provider:
+  name: aws
+  runtime: rust
+  memorySize: 128
+
+package:
+  individually: true
+
+plugins:
+  - serverless-rust
+functions:
+  hello:
+    handler: hello.bootstrap
+    events:
+      - alexaSkill: amzn1.ask.skill.ebf98539-0f2a-4c9f-a9b9-c0d122cf3307
+
