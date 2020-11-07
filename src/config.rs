@@ -15,6 +15,7 @@ pub struct Settings {
     pub pokemon_first_gen_html: String,
     pub first_gen_json: String,
     pub data_report_json: String,
+    pub redirected_folder: String,
 }
 
 pub fn load_config() -> Settings {

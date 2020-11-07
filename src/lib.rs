@@ -53,6 +53,15 @@ pub fn save_data_report(report: model::Report) {
     fs::write(data_report_json_filepath, serialized).expect("Could not write to file!!");
 }
 
+pub fn load_data_report() -> model::Report {
+    let settings = load_config();
+    let data_folder = Path::new(&settings.data_folder);
+    let data_report_json_filepath = data_folder.join(&settings.data_report_json);
+    let report_str = fs::read_to_string(data_report_json_filepath)
+        .expect("Failed to load data report JSON file.");
+    serde_json::from_str(&report_str).unwrap()
+}
+
 pub async fn save_pokemon_to_mongo(
     collection: &mongodb::Collection,
     pokemon: model::Pokemon,

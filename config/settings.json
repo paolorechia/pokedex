@@ -9,5 +9,6 @@
   "poke_list_file": "pokelist.json",
   "pokemon_first_gen_html": "first_gen.html",
   "first_gen_json": "first_gen.json",
-  "data_report_json": "data_report.json"
+  "data_report_json": "data_report.json",
+  "redirected_folder": "redirected_pokemons"
 }
