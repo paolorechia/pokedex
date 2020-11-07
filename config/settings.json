@@ -1,10 +1,12 @@
 {
-  "data_folder": "../../data",
+  "data_folder": "data",
   "poke_root_url": "https://pokemon.fandom.com/pt-br/wiki/",
   "poke_list_url": "https://pokemon.fandom.com/pt-br/wiki/Pok%C3%A9dex_Nacional",
   "poke_db": "pokemon_db.json",
   "scraping_delay_in_seconds": 10,
   "root_html_file": "root_html.html",
   "pokemons_html_folder": "pokemons_pages",
-  "poke_list_file": "pokelist.json"
+  "poke_list_file": "pokelist.json",
+  "pokemon_first_gen_html": "first_gen.html",
+  "first_gen_json": "first_gen.json"
 }
