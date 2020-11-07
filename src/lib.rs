@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 use std::vec::Vec;
+use std::error::Error;
 
 use serde_json;
 use mongodb::bson;
@@ -71,4 +72,10 @@ pub async fn update_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: 
     let filter = bson::doc! { "name": pokemon.name.clone() };
     collection.update_one(filter, d.to_owned(), None).await?;
     Ok(())
+}
+
+pub async fn find_pokemons_by_generation(collection: &mongodb::Collection, generation: i32) -> Result<Vec<model::Pokemon>, Box<Error>> {
+    let mut result: Vec<model::Pokemon> = vec![];
+
+    Ok(result)
 }
