@@ -1,15 +1,15 @@
+use std::error::Error;
 use std::fs;
 use std::path::Path;
 use std::vec::Vec;
-use std::error::Error;
 
-use serde_json;
 use mongodb::bson;
+use serde_json;
 
 // Re-exports modules as pub
-pub mod mongo;
-pub mod model;
 pub mod config;
+pub mod model;
+pub mod mongo;
 
 // Manually export functions from config
 pub fn load_config() -> config::Settings {
@@ -40,33 +40,40 @@ pub fn load_pokemon_html(settings: &config::Settings, pokemon: &str) -> Option<S
     let res = fs::read_to_string(poke_file);
     match res {
         Ok(n) => Some(n),
-        _ => None
+        _ => None,
     }
 }
 
-pub async fn save_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: model::Pokemon) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn save_pokemon_to_mongo(
+    collection: &mongodb::Collection,
+    pokemon: model::Pokemon,
+) -> Result<(), Box<dyn std::error::Error>> {
     let b = bson::to_bson(&pokemon)?;
     let d = b.as_document().unwrap();
     collection.insert_one(d.to_owned(), None).await?;
     Ok(())
 }
 
-pub async fn find_pokemon_by_name(collection: &mongodb::Collection, name: &String) -> Result<Option<model::Pokemon>, Box<dyn std::error::Error>> {
+pub async fn find_pokemon_by_name(
+    collection: &mongodb::Collection,
+    name: &String,
+) -> Result<Option<model::Pokemon>, Box<dyn std::error::Error>> {
     let filter = bson::doc! { "name": name.clone() };
     let cursor = collection.find_one(filter, None).await?;
     let pokemon = match cursor {
         Some(document) => {
             let pokemon: model::Pokemon = bson::from_document(document).unwrap();
             Some(pokemon)
-        },
-        None => { 
-            None
         }
+        None => None,
     };
     Ok(pokemon)
 }
 
-pub async fn update_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: model::Pokemon) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn update_pokemon_to_mongo(
+    collection: &mongodb::Collection,
+    pokemon: model::Pokemon,
+) -> Result<(), Box<dyn std::error::Error>> {
     let b = bson::to_bson(&pokemon)?;
     let d = b.as_document().unwrap();
     let filter = bson::doc! { "name": pokemon.name.clone() };
@@ -74,7 +81,10 @@ pub async fn update_pokemon_to_mongo(collection: &mongodb::Collection, pokemon: 
     Ok(())
 }
 
-pub async fn find_pokemons_by_generation(collection: &mongodb::Collection, generation: i32) -> Result<Vec<model::Pokemon>, Box<Error>> {
+pub async fn find_pokemons_by_generation(
+    collection: &mongodb::Collection,
+    generation: i32,
+) -> Result<Vec<model::Pokemon>, Box<Error>> {
     let mut result: Vec<model::Pokemon> = vec![];
 
     Ok(result)
