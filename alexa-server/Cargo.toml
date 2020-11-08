@@ -5,6 +5,8 @@ version = "0.1.0"
 [dependencies]
 alexa_sdk= { path = "alexa_rust", version = "0.1.0" }
 lambda_runtime = "^0.1"
+redis = { version = "0.17.0" }
+redis_client = { path="redis-connection", version = "0.1.0", package="redis-connection"}
 
 [[bin]]
 name = "bootstrap"

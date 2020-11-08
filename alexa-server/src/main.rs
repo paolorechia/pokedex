@@ -1,10 +1,15 @@
 extern crate alexa_sdk;
 extern crate lambda_runtime as lambda;
+extern crate redis;
+extern crate redis_client;
 
 use alexa_sdk::request::{IntentType, Locale, ReqType};
 use alexa_sdk::{Request, Response};
 use lambda::{error::HandlerError, lambda, Context};
+use redis_client::{create_connection, load_pokemon, Pokemon};
 use std::error::Error;
+
+static mut REDIS_CONNECTION: Option<redis::Connection> = None;
 
 fn handle_help(_req: &Request) -> Result<Response, HandlerError> {
     Ok(Response::new_simple(
@@ -93,7 +98,18 @@ fn my_handler(req: Request, _ctx: Context) -> Result<Response, HandlerError> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    unsafe {
+        let redis = create_connection();
+        match redis {
+            Ok(redis) => {
+                println!("Connected to Redis succesfully!");
+                REDIS_CONNECTION = Some(redis);
+            }
+            Err(e) => {
+                println!("Error connecting to Redis: {:?}", e);
+            }
+        }
+    }
     lambda!(my_handler);
-
     Ok(())
 }

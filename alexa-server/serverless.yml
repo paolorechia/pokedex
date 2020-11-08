@@ -1,8 +1,13 @@
 service: alexa-server-rust
 provider:
   name: aws
+  stage: dev
   runtime: rust
   memorySize: 128
+  environment:
+    REDIS_HOSTNAME: ${ssm:/${self:provider.stage, 'dev'}/POKEDEX/HOST}
+    REDIS_PASSWORD: ${ssm:/${self:provider.stage, 'dev'}/POKEDEX/PASSWORD}
+    REDIS_PORT: 31382
 
 package:
   individually: true
