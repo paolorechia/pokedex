@@ -125,13 +125,21 @@ fn evolution_extractor(pokemon: Pokemon) -> Response {
 }
 
 // TODO: Implement
-fn origin_extractor(_pokemon: Pokemon) -> Response {
-   unavailable_feature() 
+fn origin_extractor(pokemon: Pokemon) -> Response {
+    if pokemon.origin.len() > 0 {
+        Response::reply("origem", &pokemon.origin)
+    } else {
+        Response::reply("sem_origem", "Pokemon sem informação de origem.")
+    }
 }
 
 // TODO: Implement
-fn name_origin_extractor(_pokemon: Pokemon) -> Response {
-   unavailable_feature() 
+fn name_origin_extractor(pokemon: Pokemon) -> Response {
+    if pokemon.name_origin.len() > 0 {
+        Response::reply("origem", &pokemon.name_origin)
+    } else {
+        Response::reply("sem_origem_nome", "Pokemon sem informação de origem do nome.")
+    }
 }
 
 fn handle_pokemon_intent(
