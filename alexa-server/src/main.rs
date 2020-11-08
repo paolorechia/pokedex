@@ -54,10 +54,30 @@ fn handle_intent_not_implemented(_req: &Request) -> Result<Response, HandlerErro
 }
 
 fn handle_describe_pokemon(req: &Request) -> Result<Response, HandlerError> {
-    Ok(Response::reply(
-        "not_implemented",
-        "Describe not implemented :(",
-    ))
+    let redis = create_connection();
+    match redis {
+        Ok(mut redis) => {
+            let pokemon_name = req.slot_value("Pokemon");
+            match pokemon_name {
+                Some(name) => {
+                    let pokemon = load_pokemon(&mut redis, name.to_lowercase()).unwrap();
+                    if pokemon.description.len() > 0 {
+                        Ok(Response::reply("descricao", &pokemon.description))
+                    } else {
+                        Ok(Response::reply(
+                            "sem_descricao",
+                            "Pokemon sem descrição disponível.",
+                        ))
+                    }
+                }
+                None => Ok(Response::reply("sem_pokemon", "Pokemon não identificado.")),
+            }
+        }
+        Err(_) => Ok(Response::reply(
+            "banco_de_dados_indisponivel",
+            "Banco de dados indisponível. Tente mais tarde ou contate o desenvolvedor.",
+        )),
+    }
 }
 
 pub enum CustomIntentType {

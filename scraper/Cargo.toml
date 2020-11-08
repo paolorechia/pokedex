@@ -16,7 +16,7 @@ tokio = { version = "0.2", features = ["full"] }
 mongodb = "1.1.1"
 futures = "0.3.7"
 model = { version = "0.1.0", path="../pokedex-model", package="pokedex-model" }
-redis = { version = "0.1.0", path="../redis-connection", package="redis-connection"}
+redis = { version = "0.1.0", path="../alexa-server/redis-connection", package="redis-connection"}
 
 [lib]
 name = "pokedex_scraper"

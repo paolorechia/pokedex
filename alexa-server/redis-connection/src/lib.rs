@@ -57,7 +57,6 @@ pub fn config_to_url(config: RedisConfig) -> String {
 pub fn create_connection() -> redis::RedisResult<redis::Connection> {
     let config = read_credentials_from_env();
     let url = config_to_url(config);
-    println!("URL: {}", url);
     let client = redis::Client::open(url)?;
     let con = client.get_connection()?;
     println!("Connected!");
@@ -75,7 +74,7 @@ pub fn hello_world(con: &mut redis::Connection) -> redis::RedisResult<()> {
 
 pub fn save_pokemon(con: &mut redis::Connection, pokemon: Pokemon) -> redis::RedisResult<()> {
     let pokemon_string = serde_json::to_string(&pokemon).expect("Failed to serialize pokemon, panick!!");
-    con.set(pokemon.name, pokemon_string)?;
+    con.set(pokemon.name.to_lowercase(), pokemon_string)?;
     Ok(())
 }
 
@@ -83,7 +82,7 @@ pub fn load_pokemon(
     con: &mut redis::Connection,
     pokemon_name: String,
 ) -> redis::RedisResult<Pokemon> {
-    let pokemon_string: String = con.get(pokemon_name)?;
+    let pokemon_string: String = con.get(pokemon_name.to_lowercase())?;
 
     let pokemon =
         serde_json::from_str(&pokemon_string).expect("Could not get result from Redis, panick!!");
