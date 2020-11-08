@@ -1,3 +1,5 @@
+# env variables
+.env
 # DB volume
 db
 

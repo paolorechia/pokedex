@@ -1,5 +1,5 @@
 use pokedex_scraper::mongo::{connect, print_db_names};
-use pokedex_scraper::model::{Pokemon};
+use model::{Pokemon};
 use mongodb::bson;
 
 #[tokio::main]

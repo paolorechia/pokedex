@@ -9,7 +9,6 @@ use serde_json;
 
 // Re-exports modules as pub
 pub mod config;
-pub mod model;
 pub mod mongo;
 
 // Manually export functions from config

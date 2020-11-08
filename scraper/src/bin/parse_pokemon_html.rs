@@ -1,7 +1,7 @@
 use pokedex_scraper::config;
-use pokedex_scraper::model::Pokemon;
 use pokedex_scraper::mongo::init_pokemon_collection;
 use pokedex_scraper::{load_config, load_pokemon_html, load_pokemon_list, save_pokemon_to_mongo};
+use model::Pokemon;
 use scraper::{ElementRef, Html, Selector};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;

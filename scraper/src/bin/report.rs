@@ -1,7 +1,6 @@
 use pokedex_scraper::{find_pokemons_by_generation, save_data_report};
 use pokedex_scraper::mongo::init_pokemon_collection;
-use pokedex_scraper::model::Report;
-use std::vec::Vec;
+use model::Report;
 
 
 #[tokio::main]

@@ -1342,6 +1342,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3831453b3449ceb48b6d9c7ad7c96d5ea673e9b470a1dc578c2ce6521230884c"
 
 [[package]]
+name = "pokedex-model"
+version = "0.1.0"
+dependencies = [
+ "mongodb",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1568,6 +1577,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "mongodb",
+ "pokedex-model",
  "reqwest",
  "scraper",
  "select",
