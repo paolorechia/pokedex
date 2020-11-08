@@ -23,3 +23,4 @@ pub struct Report {
     pub redirected: Vec<String>,
     pub missing: Vec<String>,
 }
+
