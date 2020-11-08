@@ -1,3 +1,6 @@
+// TODO: this code needs some serious refactoring :)
+// TODO: split code across a few different files
+
 extern crate alexa_sdk;
 extern crate lambda_runtime as lambda;
 extern crate redis;
@@ -9,16 +12,19 @@ use lambda::{error::HandlerError, lambda, Context};
 use redis_client::{create_connection, load_pokemon, Pokemon};
 use std::error::Error;
 
+// TODO: Replace this with proper shared variable (Maybe Arc?)
 static mut REDIS_CONNECTION: Option<redis::Connection> = None;
 
-fn handle_help(_req: &Request) -> Result<Response, HandlerError> {
+// TODO: implement handle help
+fn _handle_help(_req: &Request) -> Result<Response, HandlerError> {
     Ok(Response::new_simple(
         "hello",
         "to say hello, tell me: say hello to someone",
     ))
 }
 
-fn handle_hello(req: &Request) -> Result<Response, HandlerError> {
+// TODO: implment proper locale handler
+fn _handle_locale(req: &Request) -> Result<Response, HandlerError> {
     let res = match req.locale() {
         Locale::AustralianEnglish => Response::new_simple("hello", "G'day mate"),
         Locale::German => Response::new_simple("hello", "Hallo Welt"),
@@ -39,21 +45,81 @@ fn handle_cancel(_req: &Request) -> Result<Response, HandlerError> {
 }
 
 fn handle_launch(_req: &Request) -> Result<Response, HandlerError> {
-    Ok(Response::reply("hello", "hello world"))
+    Ok(Response::reply("hello", "Olá, bem vindo a Pokedex Primeira Geração. Aqui você pode perguntar a respeito de pokemons da primeira geração. Tente começar com 'descreva Pikachu'."))
+}
+
+fn unavailable_feature() -> Response {
+    Response::reply(
+        "not_implemented",
+        "Função indisponível. Contate o desenvolvendor.",
+    )
 }
 
 fn handle_not_implemented(_req: &Request) -> Result<Response, HandlerError> {
-    Ok(Response::reply("not_implemented", "Not implemented :("))
+    Ok(unavailable_feature())
 }
 
 fn handle_intent_not_implemented(_req: &Request) -> Result<Response, HandlerError> {
     Ok(Response::reply(
         "not_implemented",
-        "Intent not implemented :(",
+        "Intenção indisponível. Contate o desenvolvendor.",
     ))
 }
 
-fn handle_describe_pokemon(req: &Request) -> Result<Response, HandlerError> {
+fn description_extractor(pokemon: Pokemon) -> Response {
+    if pokemon.description.len() > 0 {
+        Response::reply("descricao", &pokemon.description)
+    } else {
+        Response::reply("sem_descricao", "Pokemon sem descrição disponível.")
+    }
+}
+
+fn height_extractor(pokemon: Pokemon) -> Response {
+    if pokemon.height.len() > 0 {
+        let height = "O pokemon ".to_string()
+            + &pokemon.name
+            + " tem "
+            + &pokemon.height.replace("m", "")
+            + " metros de altura.";
+        Response::reply("altura", &height)
+    } else {
+        Response::reply("sem_altura", "Pokemon sem informação de altura disponível.")
+    }
+}
+
+fn weight_extractor(pokemon: Pokemon) -> Response {
+    if pokemon.weight.len() > 0 {
+        let weight = "O pokemon ".to_string()
+            + &pokemon.name
+            + " tem "
+            + &pokemon.height.replace("kg", "")
+            + " kilogramas de massa.";
+        Response::reply("altura", &weight)
+    } else {
+        Response::reply("sem_peso", "Pokemon sem informação de peso disponível.")
+    }
+}
+
+fn type_extractor(pokemon: Pokemon) -> Response {
+    let types: Vec<String> = pokemon.pokemon_types;
+    if types.len() > 0 && types[0].len() > 0 {
+        let tipo = "Tipo: {}";
+        Response::reply("tipo", &tipo)
+    } else {
+        Response::reply("sem_tipo", "Pokemon sem informação de tipo.")
+    }
+}
+
+fn evolution_extractor(_pokemon: Pokemon) -> Response {
+    unavailable_feature()
+}
+
+fn handle_pokemon_intent(
+    req: &Request,
+    extractor: fn(Pokemon) -> Response,
+) -> Result<Response, HandlerError> {
+    // TODO: reuse existing redis connection instead of recreating one every time.
+    // TODO: extract all response strings to a proper place.
     let redis = create_connection();
     match redis {
         Ok(mut redis) => {
@@ -61,18 +127,12 @@ fn handle_describe_pokemon(req: &Request) -> Result<Response, HandlerError> {
             match pokemon_name {
                 Some(name) => {
                     let pokemon = load_pokemon(&mut redis, name.to_lowercase()).unwrap();
-                    if pokemon.description.len() > 0 {
-                        Ok(Response::reply("descricao", &pokemon.description))
-                    } else {
-                        Ok(Response::reply(
-                            "sem_descricao",
-                            "Pokemon sem descrição disponível.",
-                        ))
-                    }
+                    Ok(extractor(pokemon))
                 }
                 None => Ok(Response::reply("sem_pokemon", "Pokemon não identificado.")),
             }
         }
+        // TODO: attempt to reconnect if connection is lost
         Err(_) => Ok(Response::reply(
             "banco_de_dados_indisponivel",
             "Banco de dados indisponível. Tente mais tarde ou contate o desenvolvedor.",
@@ -82,6 +142,10 @@ fn handle_describe_pokemon(req: &Request) -> Result<Response, HandlerError> {
 
 pub enum CustomIntentType {
     DescribePokemon,
+    PokemonHeight,
+    PokemonWeight,
+    PokemonTypes,
+    PokemonEvolution,
     Unknown,
 }
 
@@ -97,14 +161,18 @@ pub fn match_custom_intent(
     req: &Request,
 ) -> Result<Response, HandlerError> {
     match intent {
-        CustomIntentType::DescribePokemon => handle_describe_pokemon(&req),
+        CustomIntentType::DescribePokemon => handle_pokemon_intent(&req, description_extractor),
+        CustomIntentType::PokemonHeight => handle_pokemon_intent(&req, height_extractor),
+        CustomIntentType::PokemonWeight => handle_pokemon_intent(&req, weight_extractor),
+        CustomIntentType::PokemonTypes => handle_pokemon_intent(&req, type_extractor),
+        CustomIntentType::PokemonEvolution => handle_pokemon_intent(&req, evolution_extractor),
         _ => handle_intent_not_implemented(&req),
     }
 }
 
 fn handle_intent(req: &Request) -> Result<Response, HandlerError> {
     match req.intent() {
-        IntentType::User(customIntent) => match_custom_intent(string_to_intent(customIntent), &req),
+        IntentType::User(custom_intent) => match_custom_intent(string_to_intent(custom_intent), &req),
         _ => handle_cancel(&req),
     }
 }
@@ -118,6 +186,7 @@ fn my_handler(req: Request, _ctx: Context) -> Result<Response, HandlerError> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // TODO: remove this block once proper shared variable is used.
     unsafe {
         let redis = create_connection();
         match redis {
