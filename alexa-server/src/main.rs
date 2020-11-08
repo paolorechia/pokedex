@@ -92,7 +92,7 @@ fn weight_extractor(pokemon: Pokemon) -> Response {
         let weight = "O pokemon ".to_string()
             + &pokemon.name
             + " tem "
-            + &pokemon.height.replace("kg", "")
+            + &pokemon.weight.replace("kg", "")
             + " kilogramas de massa.";
         Response::reply("altura", &weight)
     } else {
@@ -103,15 +103,35 @@ fn weight_extractor(pokemon: Pokemon) -> Response {
 fn type_extractor(pokemon: Pokemon) -> Response {
     let types: Vec<String> = pokemon.pokemon_types;
     if types.len() > 0 && types[0].len() > 0 {
-        let tipo = "Tipo: {}";
+        let mut tipo = "".to_string();
+        if types.len() == 1 {
+            tipo = "Tipo ".to_string() + &types[0];
+        }
+        if types.len() == 2 {
+            tipo = "Tipos ".to_string() + &types[0] + " e " + &types[1];
+        }
         Response::reply("tipo", &tipo)
     } else {
         Response::reply("sem_tipo", "Pokemon sem informação de tipo.")
     }
 }
 
-fn evolution_extractor(_pokemon: Pokemon) -> Response {
-    unavailable_feature()
+fn evolution_extractor(pokemon: Pokemon) -> Response {
+    if pokemon.evolution.len() > 0 {
+        Response::reply("evolução", &pokemon.evolution)
+    } else {
+        Response::reply("sem_evolucao", "Pokemon sem informação de evolução.")
+    }
+}
+
+// TODO: Implement
+fn origin_extractor(_pokemon: Pokemon) -> Response {
+   unavailable_feature() 
+}
+
+// TODO: Implement
+fn name_origin_extractor(_pokemon: Pokemon) -> Response {
+   unavailable_feature() 
 }
 
 fn handle_pokemon_intent(
@@ -146,12 +166,20 @@ pub enum CustomIntentType {
     PokemonWeight,
     PokemonTypes,
     PokemonEvolution,
+    PokemonOrigin,
+    PokemonNameOrigin,
     Unknown,
 }
 
 pub fn string_to_intent(intent: String) -> CustomIntentType {
     match intent.as_str() {
         "describePokemon" => CustomIntentType::DescribePokemon,
+        "PokemonHeight" => CustomIntentType::PokemonHeight,
+        "PokemonWeight" => CustomIntentType::PokemonWeight,
+        "PokemonTypes" => CustomIntentType::PokemonTypes,
+        "PokemonEvolution" => CustomIntentType::PokemonEvolution,
+        "PokemonOrigin" => CustomIntentType::PokemonOrigin,
+        "PokemonNameOrigin" => CustomIntentType::PokemonNameOrigin,
         _ => CustomIntentType::Unknown,
     }
 }
@@ -166,6 +194,8 @@ pub fn match_custom_intent(
         CustomIntentType::PokemonWeight => handle_pokemon_intent(&req, weight_extractor),
         CustomIntentType::PokemonTypes => handle_pokemon_intent(&req, type_extractor),
         CustomIntentType::PokemonEvolution => handle_pokemon_intent(&req, evolution_extractor),
+        CustomIntentType::PokemonOrigin=> handle_pokemon_intent(&req, origin_extractor),
+        CustomIntentType::PokemonNameOrigin=> handle_pokemon_intent(&req, name_origin_extractor),
         _ => handle_intent_not_implemented(&req),
     }
 }
